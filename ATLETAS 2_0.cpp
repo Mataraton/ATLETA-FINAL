@@ -22,6 +22,8 @@ struct promedio {
     float prom;
     promedio* sig;
     corredor* apunta;
+    promedio* izq;
+    promedio* der;
 };
 promedio* cabp = nullptr;
 promedio* auxp = nullptr;
@@ -78,6 +80,7 @@ int calcularpromedio() {
         cabp->prom = prom;
         cabp->sig = nullptr;
         cabp->apunta = aux;
+        cabp->izq = cabp->der = nullptr;
     }
     else {
         // Comprobar si el usuario es apuntado (Si sí es apuntado solo actualizo el promedio, sino creo un apuntado a él)
@@ -95,6 +98,7 @@ int calcularpromedio() {
             auxp->prom = prom;
             auxp->apunta = aux;
             auxp->sig = cabp;
+            auxp->izq = auxp->der = nullptr;
             cabp = auxp;
         }
     }
@@ -131,9 +135,9 @@ int registrarvuelta() {
 // Función auxiliar para recorrer el árbol en orden ascendente
 void inorderRecursivo(promedio* nodo) {
     if (nodo != nullptr) {
-        inorderRecursivo(nodo->sig);
+        inorderRecursivo(nodo->izq);
         cout << "Promedio " << nodo->apunta->nombre << " " << nodo->prom << endl;
-        inorderRecursivo(nodo->sig);
+        inorderRecursivo(nodo->der);
     }
 }
 
@@ -147,9 +151,119 @@ void inorder() {
     inorderRecursivo(cabp);
 }
 
-int balancear() {
-    // Implementar aquí el algoritmo para balancear el árbol
-    // ...
+// Obtener la altura de un nodo
+int obtenerAltura(promedio* nodo) {
+    if (nodo == nullptr) {
+        return 0;
+    }
+    return 1 + max(obtenerAltura(nodo->izq), obtenerAltura(nodo->der));
+}
+
+// Obtener el factor de balance de un nodo
+int obtenerFactorBalance(promedio* nodo) {
+    if (nodo == nullptr) {
+        return 0;
+    }
+    return obtenerAltura(nodo->izq) - obtenerAltura(nodo->der);
+}
+
+// Rotación simple a la derecha
+promedio* rotacionDerecha(promedio* nodo) {
+    promedio* nuevoPadre = nodo->izq;
+    nodo->izq = nuevoPadre->der;
+    nuevoPadre->der = nodo;
+    return nuevoPadre;
+}
+
+// Rotación simple a la izquierda
+promedio* rotacionIzquierda(promedio* nodo) {
+    promedio* nuevoPadre = nodo->der;
+    nodo->der = nuevoPadre->izq;
+    nuevoPadre->izq = nodo;
+    return nuevoPadre;
+}
+
+// Realizar el balanceo del árbol AVL
+promedio* balancearArbolAVL(promedio* nodo) {
+    int factorBalance = obtenerFactorBalance(nodo);
+    if (factorBalance > 1) {
+        // El subárbol izquierdo es más alto, se requiere rotación a la derecha
+        if (obtenerFactorBalance(nodo->izq) < 0) {
+            // Rotación doble a la derecha
+            nodo->izq = rotacionIzquierda(nodo->izq);
+        }
+        // Rotación simple a la derecha
+        return rotacionDerecha(nodo);
+    }
+    else if (factorBalance < -1) {
+        // El subárbol derecho es más alto, se requiere rotación a la izquierda
+        if (obtenerFactorBalance(nodo->der) > 0) {
+            // Rotación doble a la izquierda
+            nodo->der = rotacionDerecha(nodo->der);
+        }
+        // Rotación simple a la izquierda
+        return rotacionIzquierda(nodo);
+    }
+    return nodo;
+}
+
+// Insertar un nodo en el árbol AVL
+promedio* insertarNodo(promedio* nodo, promedio* nuevoNodo) {
+    if (nodo == nullptr) {
+        return nuevoNodo;
+    }
+    if (nuevoNodo->prom < nodo->prom) {
+        nodo->izq = insertarNodo(nodo->izq, nuevoNodo);
+    }
+    else {
+        nodo->der = insertarNodo(nodo->der, nuevoNodo);
+    }
+    return balancearArbolAVL(nodo);
+}
+
+// Reinsertar todos los nodos en el árbol AVL
+promedio* reinsertarNodos(promedio* nodo, promedio* nuevoNodo) {
+    if (nodo == nullptr) {
+        return nuevoNodo;
+    }
+    if (nodo->izq != nullptr) {
+        nodo->izq = reinsertarNodos(nodo->izq, nuevoNodo);
+    }
+    else {
+        nodo->izq = nuevoNodo;
+    }
+    if (nodo->der != nullptr) {
+        return reinsertarNodos(nodo->der, nuevoNodo);
+    }
+    else {
+        nodo->der = nuevoNodo;
+        return nodo;
+    }
+}
+
+// Balancear el árbol AVL
+void balancear() {
+    if (cabp == nullptr) {
+        cout << "No hay promedios registrados." << endl;
+        return;
+    }
+
+    // Reinsertar todos los nodos en el árbol
+    promedio* nodoActual = cabp;
+    promedio* siguienteNodo = nodoActual->sig;
+    promedio* nuevoArbol = nullptr;
+
+    while (nodoActual != nullptr) {
+        nodoActual->izq = nodoActual->der = nullptr;
+        nuevoArbol = insertarNodo(nuevoArbol, nodoActual);
+        nodoActual = siguienteNodo;
+        if (siguienteNodo != nullptr) {
+            siguienteNodo = siguienteNodo->sig;
+        }
+    }
+
+    cabp = nuevoArbol;
+
     cout << "El árbol se ha balanceado correctamente." << endl;
 }
 
@@ -161,10 +275,10 @@ int main() {
         cout << "2. Mostrar corredores" << endl;
         cout << "3. Registrar vuelta" << endl;
         cout << "4. Mostrar Clasificación (LIFO)" << endl;
-        cout << "5. Mostrar Promedios Ordenados (Inorder)" << endl;
-        cout << "6. Balancear el árbol" << endl;
-        cout << "10. Salir" << endl;
-        cout << "Ingrese su opción: ";
+        cout << "5. Mostrar Clasificación (AVL)" << endl;
+        cout << "6. Balancear árbol AVL" << endl;
+        cout << "0. Salir" << endl;
+        cout << "Ingrese la opción: ";
         cin >> opcion;
         switch (opcion) {
         case 1:
@@ -186,7 +300,6 @@ int main() {
             balancear();
             break;
         }
-    } while (opcion != 10);
-
+    } while (opcion != 0);
     return 0;
 }
