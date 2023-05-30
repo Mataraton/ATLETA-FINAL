@@ -3,21 +3,19 @@
 
 using namespace std;
 
-// Para datos de tipo FIFO
 struct corredor {
     int numero;
     char nombre[30];
-    // Lo registro en la vuelta no en el registro inicial
     int tiempo = 0;
     int tiempototal = 0;
     int ronda = 0;
     corredor* sig;
 };
+
 corredor* cab = nullptr;
 corredor* aux = nullptr;
 corredor* aux2 = nullptr;
 
-// Structur LIFO
 struct promedio {
     float prom;
     promedio* sig;
@@ -25,133 +23,13 @@ struct promedio {
     promedio* izq;
     promedio* der;
 };
+
 promedio* cabp = nullptr;
 promedio* auxp = nullptr;
 promedio* aux2p = nullptr;
 int numerocorredor = 1;
 
-int registrar() {
-    // Tipo FIFO: Creamos el nuevo corredor
-    aux = new corredor;
-    aux->sig = nullptr;
-    cout << "Proporcione el nombre del corredor: ";
-    cin >> aux->nombre;
-    aux->numero = numerocorredor;
-    aux->ronda = aux->tiempo = 0;
-    numerocorredor++;
-    cout << "El numero asignado al corredor es: " << aux->numero << endl;
-    if (!cab) {
-        cab = aux;
-    }
-    else {
-        aux2 = cab;
-        while (aux2->sig != nullptr) {
-            aux2 = aux2->sig;
-        }
-        aux2->sig = aux;
-    }
-}
-
-int mostrar() {
-    if (cab == nullptr) {
-        cout << "No hay corredores registrados." << endl;
-        return 0;
-    }
-    cout << "Corredores registrados: " << endl;
-    for (aux = cab; aux != nullptr; aux = aux->sig) {
-        cout << "El numero " << aux->numero << " es el corredor: " << aux->nombre << " (" << aux->ronda << ") :: " << aux->tiempo << " segundos" << endl;
-    }
-}
-
-int mostrartiempos() {
-    aux2p = cabp;
-    while (aux2p != nullptr) {
-        cout << "Promedio " << aux2p->apunta->nombre << " " << aux2p->prom << endl;
-        aux2p = aux2p->sig;
-    }
-}
-
-int calcularpromedio() {
-    float prom;
-    int bandera = 0;
-    prom = aux->tiempototal / aux->ronda;
-    if (cabp == nullptr) {
-        cabp = new promedio;
-        cabp->prom = prom;
-        cabp->sig = nullptr;
-        cabp->apunta = aux;
-        cabp->izq = cabp->der = nullptr;
-    }
-    else {
-        // Comprobar si el usuario es apuntado (Si sí es apuntado solo actualizo el promedio, sino creo un apuntado a él)
-        aux2p = cabp;
-        while (aux2p != nullptr) {
-            // Verifico si el nodo apunta al corredor
-            if (aux2p->apunta == aux) {
-                aux2p->prom = prom;
-                bandera = 1;
-            }
-            aux2p = aux2p->sig;
-        }
-        if (bandera == 0) {
-            auxp = new promedio;
-            auxp->prom = prom;
-            auxp->apunta = aux;
-            auxp->sig = cabp;
-            auxp->izq = auxp->der = nullptr;
-            cabp = auxp;
-        }
-    }
-}
-
-int registrarvuelta() {
-    int numcorredor;
-    int bandera = 0;
-    mostrar();
-    cout << "Registre el número del corredor: ";
-    cin >> numcorredor;
-    aux = cab;
-    while (aux != nullptr) {
-        if (aux->numero == numcorredor) {
-            bandera = 1; // Bandera para verificar que el corredor se encontró
-            aux->ronda++;
-            cout << "Es el corredor: " << aux->nombre << " (" << aux->ronda << ") :: " << aux->tiempo << " segundos" << endl;
-            int tiempoAnterior = aux->tiempo;
-            cout << "Registre el tiempo de la última vuelta: ";
-            cin >> aux->tiempo;
-            aux->tiempototal = aux->tiempototal - tiempoAnterior + aux->tiempo;
-            if (aux->ronda >= 2) {
-                calcularpromedio();
-            }
-            break;
-        }
-        aux = aux->sig;
-    }
-    if (bandera == 0) {
-        cout << "El corredor no existe." << endl;
-    }
-}
-
-// Función auxiliar para recorrer el árbol en orden ascendente
-void inorderRecursivo(promedio* nodo) {
-    if (nodo != nullptr) {
-        inorderRecursivo(nodo->izq);
-        cout << "Promedio " << nodo->apunta->nombre << " " << nodo->prom << endl;
-        inorderRecursivo(nodo->der);
-    }
-}
-
-// Mostrar los datos de menor promedio a mayor recorriendo el árbol (LIFO)
-void inorder() {
-    if (cabp == nullptr) {
-        cout << "No hay promedios registrados." << endl;
-        return;
-    }
-    cout << "Promedios ordenados (de menor a mayor): " << endl;
-    inorderRecursivo(cabp);
-}
-
-// Obtener la altura de un nodo
+// Obtener la altura de un nodo en el árbol AVL
 int obtenerAltura(promedio* nodo) {
     if (nodo == nullptr) {
         return 0;
@@ -159,7 +37,7 @@ int obtenerAltura(promedio* nodo) {
     return 1 + max(obtenerAltura(nodo->izq), obtenerAltura(nodo->der));
 }
 
-// Obtener el factor de balance de un nodo
+// Obtener el factor de balance de un nodo en el árbol AVL
 int obtenerFactorBalance(promedio* nodo) {
     if (nodo == nullptr) {
         return 0;
@@ -167,7 +45,7 @@ int obtenerFactorBalance(promedio* nodo) {
     return obtenerAltura(nodo->izq) - obtenerAltura(nodo->der);
 }
 
-// Rotación simple a la derecha
+// Rotación simple a la derecha en el árbol AVL
 promedio* rotacionDerecha(promedio* nodo) {
     promedio* nuevoPadre = nodo->izq;
     nodo->izq = nuevoPadre->der;
@@ -175,7 +53,7 @@ promedio* rotacionDerecha(promedio* nodo) {
     return nuevoPadre;
 }
 
-// Rotación simple a la izquierda
+// Rotación simple a la izquierda en el árbol AVL
 promedio* rotacionIzquierda(promedio* nodo) {
     promedio* nuevoPadre = nodo->der;
     nodo->der = nuevoPadre->izq;
@@ -183,7 +61,7 @@ promedio* rotacionIzquierda(promedio* nodo) {
     return nuevoPadre;
 }
 
-// Realizar el balanceo del árbol AVL
+// Realizar el balanceo del árbol AVL después de insertar un nodo
 promedio* balancearArbolAVL(promedio* nodo) {
     int factorBalance = obtenerFactorBalance(nodo);
     if (factorBalance > 1) {
@@ -221,85 +99,104 @@ promedio* insertarNodo(promedio* nodo, promedio* nuevoNodo) {
     return balancearArbolAVL(nodo);
 }
 
-// Reinsertar todos los nodos en el árbol AVL
-promedio* reinsertarNodos(promedio* nodo, promedio* nuevoNodo) {
+// Recorrer y mostrar el árbol AVL en orden ascendente
+void mostrarArbolAVL(promedio* nodo) {
     if (nodo == nullptr) {
-        return nuevoNodo;
-    }
-    if (nodo->izq != nullptr) {
-        nodo->izq = reinsertarNodos(nodo->izq, nuevoNodo);
-    }
-    else {
-        nodo->izq = nuevoNodo;
-    }
-    if (nodo->der != nullptr) {
-        return reinsertarNodos(nodo->der, nuevoNodo);
-    }
-    else {
-        nodo->der = nuevoNodo;
-        return nodo;
-    }
-}
-
-// Balancear el árbol AVL
-void balancear() {
-    if (cabp == nullptr) {
-        cout << "No hay promedios registrados." << endl;
         return;
     }
+    mostrarArbolAVL(nodo->izq);
+    cout << "Número: " << nodo->apunta->numero << " | Nombre: " << nodo->apunta->nombre << " | Promedio: " << nodo->prom << endl;
+    mostrarArbolAVL(nodo->der);
+}
 
-    // Reinsertar todos los nodos en el árbol
-    promedio* nodoActual = cabp;
-    promedio* siguienteNodo = nodoActual->sig;
-    promedio* nuevoArbol = nullptr;
+// Insertar un corredor en la lista
+void insertarCorredor() {
+    corredor* n = new corredor;
+    n->numero = numerocorredor;
+    cout << "Ingrese el nombre del corredor: ";
+    cin >> n->nombre;
+    if (cab == nullptr) {
+        cab = n;
+        cab->sig = nullptr;
+        aux = cab;
+    }
+    else {
+        aux->sig = n;
+        n->sig = nullptr;
+        aux = n;
+    }
+    numerocorredor++;
+}
 
-    while (nodoActual != nullptr) {
-        nodoActual->izq = nodoActual->der = nullptr;
-        nuevoArbol = insertarNodo(nuevoArbol, nodoActual);
-        nodoActual = siguienteNodo;
-        if (siguienteNodo != nullptr) {
-            siguienteNodo = siguienteNodo->sig;
+// Registrar el tiempo de vuelta de un corredor
+void registrarTiempoVuelta() {
+    int numCorredor;
+    cout << "Ingrese el número de corredor: ";
+    cin >> numCorredor;
+
+    corredor* corredorActual = cab;
+    while (corredorActual != nullptr) {
+        if (corredorActual->numero == numCorredor) {
+            int tiempo;
+            cout << "Ingrese el tiempo de vuelta: ";
+            cin >> tiempo;
+
+            corredorActual->tiempototal += tiempo;
+            corredorActual->ronda++;
+            corredorActual->tiempo = corredorActual->tiempototal / corredorActual->ronda;
+
+            promedio* nuevoPromedio = new promedio;
+            nuevoPromedio->prom = corredorActual->tiempo;
+            nuevoPromedio->apunta = corredorActual;
+            nuevoPromedio->izq = nullptr;
+            nuevoPromedio->der = nullptr;
+
+            cabp = insertarNodo(cabp, nuevoPromedio);
+
+            cout << "Tiempo registrado correctamente." << endl;
+            return;
         }
+        corredorActual = corredorActual->sig;
     }
 
-    cabp = nuevoArbol;
+    cout << "No se encontró un corredor con ese número." << endl;
+}
 
-    cout << "El árbol se ha balanceado correctamente." << endl;
+// Mostrar los corredores y sus promedios ordenados de menor a mayor
+void mostrarPromediosOrdenados() {
+    cout << "Promedios ordenados de menor a mayor:" << endl;
+    mostrarArbolAVL(cabp);
 }
 
 int main() {
-    int opcion = 0;
-    do {
-        cout << endl << endl;
+    int opcion;
+    while (opcion != 4) {
+        cout << endl;
+        cout << "===== Registro de Corredores =====" << endl;
         cout << "1. Registrar corredor" << endl;
-        cout << "2. Mostrar corredores" << endl;
-        cout << "3. Registrar vuelta" << endl;
-        cout << "4. Mostrar Clasificación (LIFO)" << endl;
-        cout << "5. Mostrar Clasificación (AVL)" << endl;
-        cout << "6. Balancear árbol AVL" << endl;
-        cout << "0. Salir" << endl;
-        cout << "Ingrese la opción: ";
+        cout << "2. Registrar tiempo de vuelta" << endl;
+        cout << "3. Mostrar promedios ordenados" << endl;
+        cout << "4. Salir" << endl;
+        cout << "Ingrese una opción: ";
         cin >> opcion;
+
         switch (opcion) {
-        case 1:
-            registrar();
-            break;
-        case 2:
-            mostrar();
-            break;
-        case 3:
-            registrarvuelta();
-            break;
-        case 4:
-            mostrartiempos();
-            break;
-        case 5:
-            inorder();
-            break;
-        case 6:
-            balancear();
-            break;
+            case 1:
+                insertarCorredor();
+                break;
+            case 2:
+                registrarTiempoVuelta();
+                break;
+            case 3:
+                mostrarPromediosOrdenados();
+                break;
+            case 4:
+                cout << "¡Hasta luego!" << endl;
+                break;
+            default:
+                cout << "Opción inválida. Intente nuevamente." << endl;
         }
-    } while (opcion != 0);
+    }
+
     return 0;
 }
